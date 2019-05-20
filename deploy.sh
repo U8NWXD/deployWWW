@@ -91,6 +91,7 @@ done
 if [ $TYPE == "" ]; then
     echo "You must choose a hosting option."
     print_help
+    exit 1
 fi
 
 USERNAME=$(echo "$USERNAME" | tr '[:upper:]' '[:lower:]')
@@ -104,8 +105,14 @@ if [ $TYPE == "github" ]; then
     # Jekyll needs a base url in the config file so the paths work
     BASE_URL=${GITHUBREMOTE##*/}
     BASE_URL="https://${BASE_URL%.*}"
-else
+elif [ $TYPE == "suafs" ]; then
     BASE_URL="https://www.stanford.edu/~$USERNAME/site"
+elif [ $TYPE == "keybase" ]; then
+    BASE_URL="https://$USERNAME.keybase.pub"
+else
+    echo "You must select a remote host."
+    print_help
+    exit 1
 fi
 
 # Insert the base url into the config file
