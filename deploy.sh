@@ -17,30 +17,35 @@ REMOTE_REPO="~/Documents/git_hosted/site.git"
 BUILD_DIR=_site
 
 print_help() {
-    echo "Usage: deploy.sh [-h] (-g username [-t] | -s sunet [-r repo_dir] [-w www_path]) [-b build_dir]"
+    echo "Usage: deploy.sh [-h] (-g username [-t] | -s sunet [-r repo_dir] [-w www_path] | -k keybase_username) [-b build_dir]"
     echo "  -g: Use GitHub Pages"
     echo "  -s: Use Stanford AFS Web Hosting"
     echo "  -t: Use HTTPS to connect to GitHub repository"
     echo "  -r: Store the remote repository at the specified path"
     echo "  -w: Put the compiled HTML files at the specified path"
+    echo "  -k: Host in Keybase public folder"
     echo "  -b: Get the built website from the specified path"
 }
 
-USE_GITHUB=true
+TYPE=""  # Can be github, suafs, or keybase
 USE_SSH=true
 
-while getopts ":hg:ts:r:w:b:" opt; do
+while getopts ":hg:ts:r:w:k:b:" opt; do
     case $opt in
         g)
-            USE_GITHUB=true
+            TYPE="github"
             USERNAME=$OPTARG
             ;;
         s)
-            USE_GITHUB=false
+            TYPE="suafs"
+            USERNAME=$OPTARG
+            ;;
+        k)
+            TYPE="keybase"
             USERNAME=$OPTARG
             ;;
         r)
-            if [ $USE_GITHUB ]; then
+            if [ $TYPE != "suafs" ]; then
                 echo "Option -r only valid when using Stanford AFS"
                 print_help
                 exit 1
@@ -48,7 +53,7 @@ while getopts ":hg:ts:r:w:b:" opt; do
             REMOTE_REPO=$OPTARG
             ;;
         w)
-            if [ $USE_GITHUB ]; then
+            if [ $TYPE != "suafs" ]; then
                 echo "Option -w only valid when using Stanford AFS"
                 print_help
                 exit 1
@@ -59,7 +64,7 @@ while getopts ":hg:ts:r:w:b:" opt; do
             BUILD_DIR=$OPTARG
             ;;
         t)
-            if ! $USE_GITHUB; then
+            if [ $TYPE != "github" ]; then
                 echo "Option -t only valid when using GitHub Pages"
                 print_help
                 exit 1
@@ -83,9 +88,14 @@ while getopts ":hg:ts:r:w:b:" opt; do
     esac
 done
 
+if [ $TYPE == "" ]; then
+    echo "You must choose a hosting option."
+    print_help
+fi
+
 USERNAME=$(echo "$USERNAME" | tr '[:upper:]' '[:lower:]')
 
-if $USE_GITHUB; then
+if [ $TYPE == "github" ]; then
     if $USE_SSH; then
         GITHUBREMOTE="git@github.com:$USERNAME/$USERNAME.github.io.git"
     else
@@ -112,9 +122,9 @@ git -C "$BUILD_DIR" init
 git -C "$BUILD_DIR" add -A
 git -C "$BUILD_DIR" commit --no-gpg-sign -m 'deploy'
 
-if $USE_GITHUB; then
+if [ $TYPE == "github" ]; then
     git -C "$BUILD_DIR" push -f "$GITHUBREMOTE" master:master
-else
+elif [ $TYPE == "suafs" ]; then
     # Create git repo if it doesn't already exist
     if ! ssh -l "$USERNAME" "$SUHOST" ls "$REMOTE_REPO" >/dev/null 2>&1; then
         ssh -l "$USERNAME" "$SUHOST" mkdir -p "$REMOTE_REPO"
@@ -128,4 +138,9 @@ else
     SUREMOTE="ssh://$USERNAME@$SUHOST/afs/.ir/users/${USERNAME:0:1}/${USERNAME:1:1}/$USERNAME/${REMOTE_REPO:2}"
     git -C "$BUILD_DIR" push -f "$SUREMOTE" master:master
 	ssh -l "$USERNAME" "$SUHOST" git -C "$REMOTE_WWW" pull -f
+elif [ $TYPE == "keybase" ]; then
+    cp -r "$BUILD_DIR/" "/keybase/public/$USERNAME/"
+else
+    echo "Invalid destination chosen."
+    print_help
 fi
