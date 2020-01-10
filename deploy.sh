@@ -126,6 +126,11 @@ jekyll build
 # Restore the original config file
 mv _config.yml.bak _config.yml
 
+# To avoid leaking git history, re-generate each time
+if [ -d "$BUILD_DIR/.git/" ]; then
+    rm -rf "$BUILD_DIR/.git"
+fi
+
 git -C "$BUILD_DIR" init
 git -C "$BUILD_DIR" add -A
 git -C "$BUILD_DIR" commit --no-gpg-sign -m 'deploy'
