@@ -15,6 +15,7 @@ SUHOST="myth.stanford.edu"
 REMOTE_WWW="~/WWW/site"
 REMOTE_REPO="~/Documents/git_hosted/site.git"
 BUILD_DIR=_site
+KEYBASE_DIR="/Volumes/Keybase/public"
 
 print_help() {
     echo "Usage: deploy.sh [-h] (-g username [-t] | -s sunet [-r repo_dir] [-w www_path] | -k keybase_username) [-b build_dir]"
@@ -146,7 +147,7 @@ elif [ $TYPE == "suafs" ]; then
     git -C "$BUILD_DIR" push -f "$SUREMOTE" master:master
 	ssh -l "$USERNAME" "$SUHOST" git -C "$REMOTE_WWW" pull -f
 elif [ $TYPE == "keybase" ]; then
-    cp -r "$BUILD_DIR/" "/keybase/public/$USERNAME/"
+    cp -r "$BUILD_DIR/" "$KEYBASE_DIR/$USERNAME/"
 else
     echo "Invalid destination chosen."
     print_help
