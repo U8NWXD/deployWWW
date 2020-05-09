@@ -116,6 +116,11 @@ else
     exit 1
 fi
 
+if ! grep -q "baseurl: null" _config.yml; then
+    echo "ERROR: The baseurl in _config.yml is not 'null'. Aborting."
+    exit 1
+fi
+
 # Insert the base url into the config file
 # How to escape BASE_URL: https://unix.stackexchange.com/a/265269
 sed -i ".bak" -e "s/baseurl: null/baseurl: ${BASE_URL//\//\\/}/g" _config.yml
