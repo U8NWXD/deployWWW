@@ -138,7 +138,7 @@ fi
 
 git -C "$BUILD_DIR" init
 git -C "$BUILD_DIR" add -A
-git -C "$BUILD_DIR" commit --no-gpg-sign -m 'deploy'
+git -C "$BUILD_DIR" commit -m 'deploy'
 
 if [ $TYPE == "github" ]; then
     git -C "$BUILD_DIR" push -f "$GITHUBREMOTE" master:master
